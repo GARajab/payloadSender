@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payload Sender</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --accent-color: #0071e3;
+            --box-bg: #ffffff;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--box-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 { font-size: 24px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.5px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { font-size: 12px; font-weight: 500; color: #86868b; display: block; margin-bottom: 5px; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--accent-color); }
+
+        .drop-zone {
+            border: 2px dashed #d2d2d7;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .drop-zone:hover { background-color: #fafafa; }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        #result { margin-top: 20px; font-size: 14px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Send Payload</h1>
+        <form id="payloadForm">
+            <div class="input-group">
+                <label for="host">IP Address</label>
+                <input type="text" id="host" name="host" placeholder="192.168.1.100" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="port">Port</label>
+                <input type="number" id="port" name="port" value="9020" required>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <span id="dropText">Click to select payload file</span>
+                <input type="file" id="file" name="file" style="display: none;" required>
+            </div>
+
+            <button type="submit">Send Payload</button>
+        </form>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('file');
+        const dropText = document.getElementById('dropText');
+        const form = document.getElementById('payloadForm');
+        const resultText = document.getElementById('result');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) dropText.textContent = fileInput.files[0].name;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultText.textContent = "Sending...";
+            resultText.style.color = "#86868b";
+            
+            const formData = new FormData();
+            formData.append('host', document.getElementById('host').value);
+            formData.append('port', document.getElementById('port').value);
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                const response = await fetch('/send', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    resultText.textContent = result.message;
+                    resultText.style.color = "#34c759";
+                } else {
+                    resultText.textContent = "Error: " + result.message;
+                    resultText.style.color = "#ff3b30";
+                }
+            } catch (err) {
+                resultText.textContent = "Connection error.";
+                resultText.style.color = "#ff3b30";
+            }
+        });
+    </script>
+</body>
+</html>
