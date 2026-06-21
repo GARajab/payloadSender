@@ -7,20 +7,20 @@ import { fileURLToPath } from 'url';
 
 const app = express();
 const upload = multer();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Serverless explicitly serving the public HTML homepage
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, '../public/index.html');
+    let indexPath = path.join(__dirname, 'public/index.html');
+    if (!fs.existsSync(indexPath)) {
+        indexPath = path.join(__dirname, '../public/index.html');
+    }
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send('Frontend index.html file not found in public/ directory.');
+        res.status(404).send('Frontend index.html file not found.');
     }
 });
 
-// Handling payload transmission processes
 app.post('/send', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ status: 'error', message: 'No file uploaded.' });
