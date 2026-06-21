@@ -2,11 +2,25 @@ import express from 'express';
 import multer from 'multer';
 import net from 'net';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 const app = express();
-const upload = multer(); // Store file in memory buffer instead of disk
+const upload = multer();
 
-// Route handling sending process
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Serverless explicitly serving the public HTML homepage
+app.get('/', (req, res) => {
+    const indexPath = path.join(__dirname, '../public/index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('Frontend index.html file not found in public/ directory.');
+    }
+});
+
+// Handling payload transmission processes
 app.post('/send', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ status: 'error', message: 'No file uploaded.' });
@@ -17,8 +31,6 @@ app.post('/send', upload.single('file'), (req, res) => {
     const targetPort = parseInt(port);
 
     const client = new net.Socket();
-
-    // Set a strict timeout for serverless environments
     client.setTimeout(5000); 
 
     client.connect(targetPort, host, () => {
